@@ -22,7 +22,6 @@ def main():
     # Centralized title
     st.title("Sistema de Controle distribuído para Branqueamento Térmico da Glicerina com controlador PID")
 
-    initial_k, initial_theta, initial_tau = 0.09, 5.17, 47.25
     arquivo_mat = 'Dataset/Dataset_Grupo6.mat'
     try:
         Dados = scipy.io.loadmat(arquivo_mat)
@@ -96,7 +95,7 @@ def main():
             plot_second_placeholder = st.empty()  # Placeholder for the graph
 
         # Selectbox to choose the type of PID
-        pid_options = ("CHR", "ITAE", "Manual")  # Adicionando a opção Manual
+        pid_options = ("CHR", "ITAE")
         option2 = st.selectbox("Especifique o Método de Sintonia:", pid_options, index=0)
         plot_title_graph_second.subheader(f"{option2}")
 
@@ -106,45 +105,30 @@ def main():
         theta_vazio = st.empty()
         tau_vazio = st.empty()
 
-        kp_manual_vazio = st.empty()
-        ti_manual_vazio = st.empty()
-        td_manual_vazio = st.empty()
+        kp_chr_initial = 0.6 * tau_estimado / (K * theta_estimado) if K * theta_estimado != 0 else 0.0
+        td_chr_initial = theta_estimado / 2
+        ti_chr_initial = tau_estimado
 
-        kp = initial_k
-        theta_d = initial_theta
-        tau_i = initial_tau
+        a, b, c, d, e, f = 0.965, -0.85, 0.796, -0.147, 0.308, 0.929
+        kp_itae_initial = (a / K) * ((theta_estimado / tau_estimado) ** b) if K != 0 and tau_estimado != 0 else 0.0
+        ti_itae_initial = tau_estimado / (c + (d * (theta_estimado / tau_estimado))) if tau_estimado != 0 else 0.0
+        td_itae_initial = tau_estimado * e * ((theta_estimado / tau_estimado) ** f) if tau_estimado != 0 else 0.0
 
         if option2 == "CHR":
-            kp = k_vazio.number_input("Ganho Proporcional (Kp)", value=0.6 * initial_tau / (initial_k * initial_theta))
-            theta_d = theta_vazio.number_input("Tempo Derivativo (Td)", value=initial_theta / 2)
-            tau_i = tau_vazio.number_input("Tempo Integral (Ti)", value=initial_tau)
+            kp = k_vazio.number_input("Ganho Proporcional (Kp)", value=kp_chr_initial)
+            theta_d = theta_vazio.number_input("Tempo Derivativo (Td)", value=td_chr_initial)
+            tau_i = tau_vazio.number_input("Tempo Integral (Ti)", value=ti_chr_initial)
+
+            tempo_chr, saida_chr = CHR(kp, tau_i, theta_d, amplitude_degrau, tempo)
+            fig_second = plot_graph_pid_plotly(tempo_chr, saida_chr, tempo, option2, degrau)
 
         elif option2 == "ITAE":
-            a, b, c, d, e, f = 0.965, -0.85, 0.796, -0.147, 0.308, 0.929
-            kp_itae_initial = (a / initial_k) * ((initial_theta / initial_tau) ** b)
-            ti_itae_initial = initial_tau / (c + (d * (initial_theta / initial_tau)))
-            td_itae_initial = initial_tau * e * ((initial_theta / initial_tau) ** f)
-
             kp = k_vazio.number_input("Ganho Proporcional (Kp)", value=kp_itae_initial)
             tau_i = tau_vazio.number_input("Tempo Integral (Ti)", value=ti_itae_initial)
             theta_d = theta_vazio.number_input("Tempo Derivativo (Td)", value=td_itae_initial)
 
-        elif option2 == "Manual":
-            kp = kp_manual_vazio.number_input("Ganho Proporcional (Kp)", value=1.0)
-            tau_i = ti_manual_vazio.number_input("Tempo Integral (Ti)", value=10.0)
-            theta_d = td_manual_vazio.number_input("Tempo Derivativo (Td)", value=1.0)
-
-        # Update the graph based on the selected option
-        if option2 == "CHR":
-            tempo_chr, saida_chr = CHR(kp, tau_i, theta_d, amplitude_degrau, tempo)
-            fig_second = plot_graph_pid_plotly(tempo_chr, saida_chr, tempo, option2, degrau)
-        elif option2 == "ITAE":
             tempo_itae, saida_itae = ITAE(kp, tau_i, theta_d, amplitude_degrau, tempo)
             fig_second = plot_graph_pid_plotly(tempo_itae, saida_itae, tempo, option2, degrau)
-        elif option2 == "Manual":
-            # Simular com os parâmetros manuais (CHR usa a mesma estrutura de PID)
-            tempo_manual, saida_manual = CHR(kp, tau_i, theta_d, amplitude_degrau, tempo)
-            fig_second = plot_graph_pid_plotly(tempo_manual, saida_manual, tempo, option2, degrau)
 
         # Update the graph in the placeholder
         plot_second_placeholder.plotly_chart(fig_second, use_container_width=True)
