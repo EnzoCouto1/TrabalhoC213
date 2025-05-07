@@ -77,8 +77,6 @@ def CHR(k, tau, theta, amplitude_degrau, tempo):
         sistema_chr_controlado * amplitude_degrau, tempo
     )
 
-
-
     return tempo_chr, saida_chr
 
 
@@ -114,7 +112,7 @@ def ITAE(k, tau, theta, amplitude_degrau, tempo, tau_inicial=47.50):
     pid_itae_delay = ctl.series(ctl.tf(num_delay, den_delay), controlador_itae)
 
     # Closed-loop system with feedback
-    sys_theta = ctl.tf(k, [tau_inicial, 1])
+    sys_theta = ctl.tf(k, [tau, 1])  # <--- AQUI ESTÁ A CORREÇÃO
     itae = ctl.series(pid_itae_delay, sys_theta)
     sys_ctrl_itae = ctl.feedback(itae, 1)
     temp_ITAE, sinal_ITAE = ctl.step_response(sys_ctrl_itae * amplitude_degrau, tempo)
