@@ -20,7 +20,7 @@ from utils.plot_utils import (
 
 def main():
     # Centralized title
-    st.title("C213 - PROJETO DE SISTEMAS EMBARCADOS")
+    st.title("Sistema de Controle distribuído para Branqueamento Térmico da Glicerina com controlador PID")
 
     # Default values for the right column graph
     initial_k, initial_theta, initial_tau = 0.09, 5.17, 47.25
@@ -28,11 +28,9 @@ def main():
     try:
         Dados = scipy.io.loadmat(arquivo_mat)
 
-        # Load data from the MAT file
-        # Extrair os dados
-        tempo = Dados['reactionExperiment'][0, 0]['sampleTime'].flatten().astype(np.float64)
-        degrau = Dados['reactionExperiment'][0, 0]['dataInput'].flatten()
-        potencia_motor = Dados['reactionExperiment'][0, 0]['dataOutput'].flatten()
+        tempo = Dados['reactionExperiment'][0, 0]['sampleTime'][:, 0].astype(np.float64)
+        degrau = Dados['reactionExperiment'][0, 0]['dataInput'][:, 0]
+        potencia_motor = Dados['reactionExperiment'][0, 0]['dataOutput'][:, 0]
 
         amplitude_degrau = degrau[-1]  # Step amplitude
 
